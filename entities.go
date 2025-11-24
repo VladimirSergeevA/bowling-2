@@ -1,13 +1,18 @@
 package main
 
 type Player struct {
-	id            int
-	throws        string
-	est_play_time float64
-	max_wait_time float64
-	score         int
+	Id          int
+	Throws      string
+	EstPlayTime float64
+	MaxWaitTime float64
+	Score       int
 }
 type Lane struct {
-	id     int
-	player *Player
+	Id     int
+	Player *Player
+}
+type Manager struct {
+	Lanes      []Lane
+	FreeLanes  chan int
+	IncPlayers chan *Player
 }
