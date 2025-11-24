@@ -40,13 +40,15 @@ func Inp(s string) ([]int, error) {
 func Scr(throws []int) (int, error) {
 	ttl := 0
 	i := 0
-	for frame := 1; frame <= 9; frame++ {
+
+	for frame := 1; frame <= 10; frame++ {
 		if i >= len(throws) {
 			return 0, fmt.Errorf("недостаточно бросков для фрейма %d", frame)
 		}
+
 		if throws[i] == 10 {
 			if i+2 >= len(throws) {
-				return 0, fmt.Errorf("недостаточно бонусных бросков после страйка на фрейме %d", frame)
+				return 0, fmt.Errorf("недостаточно бонусных бросков после страйка (фрейм %d)", frame)
 			}
 			ttl += 10 + throws[i+1] + throws[i+2]
 			i++
@@ -55,54 +57,25 @@ func Scr(throws []int) (int, error) {
 		if i+1 >= len(throws) {
 			return 0, fmt.Errorf("не хватает второго броска для фрейма %d", frame)
 		}
-		tr1 := throws[i]
-		tr2 := throws[i+1]
-		if tr1 < 0 || tr1 > 10 || tr2 < 0 || tr2 > 10 {
+		first := throws[i]
+		second := throws[i+1]
+		if first < 0 || first > 10 || second < 0 || second > 10 {
 			return 0, fmt.Errorf("некорректное значение броска в фрейме %d", frame)
 		}
-		sum := tr1 + tr2
-		if sum > 10 {
-			return 0, fmt.Errorf("сумма бросков превышает 10 в фрейме %d", frame)
-		}
+		sum := first + second
 		if sum == 10 {
 			if i+2 >= len(throws) {
-				return 0, fmt.Errorf("недостаточно бонусных бросков после spare на фрейме %d", frame)
+				return 0, fmt.Errorf("недостаточно бонусных бросков после спэа (фрейм %d)", frame)
 			}
 			ttl += 10 + throws[i+2]
-		} else {
+			i += 2
+		} else if sum < 10 {
 			ttl += sum
+			i += 2
+		} else {
+			return 0, fmt.Errorf("сумма бросков превышает 10 в фрейме %d", frame)
 		}
-		i += 2
 	}
-	if i >= len(throws) {
-		return 0, fmt.Errorf("недостаточно бросков для фрейма 10")
-	}
-	if throws[i] == 10 {
-		if i+2 >= len(throws) {
-			return 0, fmt.Errorf("в 10-м фрейме после страйка нужно еще 2 броска")
-		}
-		ttl += throws[i] + throws[i+1] + throws[i+2]
-		return ttl, nil
-	}
-	if i+1 >= len(throws) {
-		return 0, fmt.Errorf("не хватает второго броска для фрейма 10")
-	}
-	tr1 := throws[i]
-	tr2 := throws[i+1]
-	if tr1 < 0 || tr1 > 10 || tr2 < 0 || tr2 > 10 {
-		return 0, fmt.Errorf("некорректное значение броска в фрейме 10")
-	}
-	sum := tr1 + tr2
-	if sum == 10 {
-		if i+2 >= len(throws) {
-			return 0, fmt.Errorf("в 10-м фрейме после spare нужен еще 1 бросок")
-		}
-		ttl += throws[i] + throws[i+1] + throws[i+2]
-		return ttl, nil
-	}
-	if sum > 10 {
-		return 0, fmt.Errorf("сумма бросков превышает 10 в фрейме 10")
-	}
-	ttl += sum
+
 	return ttl, nil
 }
