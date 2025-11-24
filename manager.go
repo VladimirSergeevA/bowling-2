@@ -1,5 +1,11 @@
 package main
 
+import (
+	"bowling-2/utils"
+	"fmt"
+	"time"
+)
+
 func NewManager(ttlLanes int) *Manager {
 	freeLanes := make(chan int, ttlLanes)
 	incPlayers := make(chan *Player)
@@ -14,10 +20,6 @@ func NewManager(ttlLanes int) *Manager {
 		IncPlayers: incPlayers,
 	}
 	return mgr
-}
-
-func (mgr *Manager) play(laneid int, pl *Player) {
-
 }
 
 func (mgr *Manager) Run() {
@@ -38,4 +40,22 @@ func (mgr *Manager) Run() {
 			avLanes = append(avLanes, laneid)
 		}
 	}
+}
+
+func (mgr *Manager) play(laneid int, pl *Player) {
+	mgr.Lanes[laneid].Player = pl
+	time.Sleep(time.Duration(pl.EstPlayTime))
+	th, er := utils.Inp(pl.Throws)
+	if er != nil {
+		fmt.Printf("ошибка игрока-%d %v", pl.Id, er)
+	} else {
+		sc, er := utils.Scr(th)
+		if er != nil {
+			fmt.Printf("ошибка игрока-%d %v", pl.Id, er)
+		} else {
+			pl.Score = sc
+		}
+	}
+	mgr.Lanes[laneid].Player = nil
+	mgr.FreeLanes <- laneid
 }
