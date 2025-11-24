@@ -95,3 +95,9 @@ func (mgr *Manager) play(laneid int, pl *Player) {
 	mgr.mu.Unlock()
 	mgr.FreeLanes <- laneid
 }
+
+func (mgr *Manager) GetFinishedCount() int {
+	mgr.mu.Lock()
+	defer mgr.mu.Unlock()
+	return len(mgr.FinishedPlayers)
+}

@@ -110,10 +110,10 @@ func printLeaderboard(mgr *Manager) {
 		return players[i].Score > players[j].Score
 	})
 
-	fmt.Println("\n\n топ-3 за сегодня")
+	fmt.Println("\n\n топ игроков за сегодня")
 
 	// for i, p := range players  {
-	for i := 0; i < 3 && i < len(players); i++ {
+	for i := 0; i < len(players); i++ {
 		p := players[i]
 		fmt.Printf("%d. Player %d \t Score: %d\n", i+1, p.Id, p.Score)
 	}
@@ -139,7 +139,7 @@ func main() {
 	go display(mgr, done)
 	genPlayers(mgr, cnt)
 
-	for len(mgr.FinishedPlayers) < cnt {
+	for mgr.GetFinishedCount() < cnt {
 		time.Sleep(500 * time.Millisecond)
 	}
 
