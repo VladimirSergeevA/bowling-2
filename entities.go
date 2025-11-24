@@ -1,5 +1,7 @@
 package main
 
+import "sync"
+
 type Player struct {
 	Id          int
 	Throws      string
@@ -15,4 +17,6 @@ type Manager struct {
 	Lanes      []Lane
 	FreeLanes  chan int
 	IncPlayers chan *Player
+	Queue      []*Player
+	mu         sync.Mutex
 }

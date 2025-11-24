@@ -27,11 +27,36 @@ func genPlayers(mgr *Manager) {
 			Throws:      thr,
 			EstPlayTime: plTime,
 		}
-		fmt.Printf("новый игрок %d пришел на время %f\n", p.Id, p.EstPlayTime)
+		// fmt.Printf("новый игрок %d пришел на время %f\n", p.Id, p.EstPlayTime)
 		mgr.IncPlayers <- p
 		ids++
 		wait := time.Duration(200+rand.Intn(800)) * time.Millisecond
 		time.Sleep(wait)
+	}
+}
+
+func display(mgr *Manager) {
+	for {
+		fmt.Print("\033[H\033[2J")
+		mgr.mu.Lock()
+		for _, lane := range mgr.Lanes {
+			if lane.Player == nil {
+				fmt.Printf("дорожка %d \t свободна\n", lane.Id)
+			} else {
+				p := lane.Player
+				fmt.Printf("дорожка %d \t игрок-%d \t счет: %d \t время: %.1f\n", lane.Id, p.Id, p.Score, p.EstPlayTime)
+			}
+		}
+		fmt.Println()
+		if len(mgr.Queue) == 0 {
+			fmt.Print("empty")
+		} else {
+			for _, p := range mgr.Queue {
+				fmt.Printf("%d ", p.Id)
+			}
+		}
+		mgr.mu.Unlock()
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -50,5 +75,6 @@ func main() {
 
 	mgr := NewManager(3)
 	go mgr.Run()
+	go display(mgr)
 	genPlayers(mgr)
 }

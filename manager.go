@@ -23,28 +23,39 @@ func NewManager(ttlLanes int) *Manager {
 }
 
 func (mgr *Manager) Run() {
-	var queue []*Player
+	// var queue []*Player
 	var avLanes []int
 	for {
-		for len(queue) > 0 && len(avLanes) > 0 {
-			p := queue[0]
-			queue = queue[1:]
-			laneid := avLanes[0]
+		mgr.mu.Lock()
+		for len(mgr.Queue) > 0 && len(avLanes) > 0 {
+			player := mgr.Queue[0]
+			mgr.Queue = mgr.Queue[1:]
+
+			laneID := avLanes[0]
 			avLanes = avLanes[1:]
-			go mgr.play(laneid, p)
+
+			go mgr.play(laneID, player)
 		}
+		mgr.mu.Unlock()
+
 		select {
-		case pl := <-mgr.IncPlayers:
-			queue = append(queue, pl)
-		case laneid := <-mgr.FreeLanes:
-			avLanes = append(avLanes, laneid)
+		case player := <-mgr.IncPlayers:
+			mgr.mu.Lock()
+			mgr.Queue = append(mgr.Queue, player)
+			mgr.mu.Unlock()
+
+		case laneID := <-mgr.FreeLanes:
+			avLanes = append(avLanes, laneID)
 		}
 	}
 }
 
 func (mgr *Manager) play(laneid int, pl *Player) {
+	mgr.mu.Lock()
 	mgr.Lanes[laneid].Player = pl
-	time.Sleep(time.Duration(pl.EstPlayTime))
+	mgr.mu.Unlock()
+
+	time.Sleep(time.Duration(pl.EstPlayTime * float64(time.Second)))
 	th, er := utils.Inp(pl.Throws)
 	if er != nil {
 		fmt.Printf("ошибка игрока-%d %v", pl.Id, er)
@@ -56,6 +67,8 @@ func (mgr *Manager) play(laneid int, pl *Player) {
 			pl.Score = sc
 		}
 	}
+	mgr.mu.Lock()
 	mgr.Lanes[laneid].Player = nil
+	mgr.mu.Unlock()
 	mgr.FreeLanes <- laneid
 }
