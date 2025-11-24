@@ -41,21 +41,32 @@ func (mgr *Manager) Run() {
 		select {
 		case player := <-mgr.IncPlayers:
 			mgr.mu.Lock()
+			player.JoinTime = time.Now()
 			mgr.Queue = append(mgr.Queue, player)
 			mgr.mu.Unlock()
 
 		case laneID := <-mgr.FreeLanes:
 			avLanes = append(avLanes, laneID)
+
+		case <-time.After(100 * time.Millisecond):
+			mgr.mu.Lock()
+			now := time.Now()
+			n := 0
+			for _, p := range mgr.Queue {
+				if now.Sub(p.JoinTime).Seconds() > p.MaxWaitTime {
+					mgr.LastLeftId = p.Id
+				} else {
+					mgr.Queue[n] = p
+					n++
+				}
+			}
+			mgr.Queue = mgr.Queue[:n]
+			mgr.mu.Unlock()
 		}
 	}
 }
 
 func (mgr *Manager) play(laneid int, pl *Player) {
-	mgr.mu.Lock()
-	mgr.Lanes[laneid].Player = pl
-	mgr.mu.Unlock()
-
-	time.Sleep(time.Duration(pl.EstPlayTime * float64(time.Second)))
 	th, er := utils.Inp(pl.Throws)
 	if er != nil {
 		fmt.Printf("ошибка игрока-%d %v", pl.Id, er)
@@ -67,6 +78,15 @@ func (mgr *Manager) play(laneid int, pl *Player) {
 			pl.Score = sc
 		}
 	}
+
+	pl.StartTime = time.Now()
+
+	mgr.mu.Lock()
+	mgr.Lanes[laneid].Player = pl
+	mgr.mu.Unlock()
+
+	time.Sleep(time.Duration(pl.EstPlayTime * float64(time.Second)))
+
 	mgr.mu.Lock()
 	mgr.Lanes[laneid].Player = nil
 	mgr.mu.Unlock()

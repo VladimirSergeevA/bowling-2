@@ -1,6 +1,9 @@
 package main
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 type Player struct {
 	Id          int
@@ -8,6 +11,8 @@ type Player struct {
 	EstPlayTime float64
 	MaxWaitTime float64
 	Score       int
+	StartTime   time.Time
+	JoinTime    time.Time
 }
 type Lane struct {
 	Id     int
@@ -18,5 +23,6 @@ type Manager struct {
 	FreeLanes  chan int
 	IncPlayers chan *Player
 	Queue      []*Player
+	LastLeftId int
 	mu         sync.Mutex
 }

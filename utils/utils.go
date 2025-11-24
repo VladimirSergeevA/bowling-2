@@ -79,3 +79,41 @@ func Scr(throws []int) (int, error) {
 
 	return ttl, nil
 }
+
+func ScrPart(throws []int) int {
+	ttl := 0
+	i := 0
+
+	for frame := 1; frame <= 10; frame++ {
+		if i >= len(throws) {
+			break
+		}
+
+		if throws[i] == 10 {
+			if i+2 >= len(throws) {
+				break
+			}
+			ttl += 10 + throws[i+1] + throws[i+2]
+			i++
+			continue
+		}
+		if i+1 >= len(throws) {
+			break
+		}
+		first := throws[i]
+		second := throws[i+1]
+		sum := first + second
+		if sum == 10 {
+			if i+2 >= len(throws) {
+				break
+			}
+			ttl += 10 + throws[i+2]
+			i += 2
+		} else {
+			ttl += sum
+			i += 2
+		}
+	}
+
+	return ttl
+}
