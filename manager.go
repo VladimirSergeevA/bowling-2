@@ -55,6 +55,8 @@ func (mgr *Manager) Run() {
 			for _, p := range mgr.Queue {
 				if now.Sub(p.JoinTime).Seconds() > p.MaxWaitTime {
 					mgr.LastLeftId = p.Id
+					p.Score = -1
+					mgr.FinishedPlayers = append(mgr.FinishedPlayers, p)
 				} else {
 					mgr.Queue[n] = p
 					n++
@@ -89,6 +91,7 @@ func (mgr *Manager) play(laneid int, pl *Player) {
 
 	mgr.mu.Lock()
 	mgr.Lanes[laneid].Player = nil
+	mgr.FinishedPlayers = append(mgr.FinishedPlayers, pl)
 	mgr.mu.Unlock()
 	mgr.FreeLanes <- laneid
 }

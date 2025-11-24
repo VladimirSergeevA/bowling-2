@@ -19,10 +19,11 @@ type Lane struct {
 	Player *Player
 }
 type Manager struct {
-	Lanes      []Lane
-	FreeLanes  chan int
-	IncPlayers chan *Player
-	Queue      []*Player
-	LastLeftId int
-	mu         sync.Mutex
+	Lanes           []Lane
+	FreeLanes       chan int
+	IncPlayers      chan *Player
+	Queue           []*Player
+	FinishedPlayers []*Player
+	LastLeftId      int
+	mu              sync.Mutex
 }

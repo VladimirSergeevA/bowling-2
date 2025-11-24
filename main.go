@@ -4,6 +4,7 @@ import (
 	"bowling-2/utils"
 	"fmt"
 	"math/rand"
+	"sort"
 	"time"
 )
 
@@ -18,16 +19,16 @@ func genRandGame() string {
 	return res
 }
 
-func genPlayers(mgr *Manager) {
+func genPlayers(mgr *Manager, count int) {
 	ids := 1
-	for {
+	for i := 0; i < count; i++ {
 		thr := genRandGame()
 		plTime := 0.5 + rand.Float64()*3.0
 		p := &Player{
 			Id:          ids,
 			Throws:      thr,
 			EstPlayTime: plTime,
-			MaxWaitTime: float64(rand.Intn(10) + 5),
+			MaxWaitTime: float64(rand.Intn(3) + 1),
 		}
 		// fmt.Printf("новый игрок %d пришел на время %f\n", p.Id, p.EstPlayTime)
 		mgr.IncPlayers <- p
@@ -37,8 +38,13 @@ func genPlayers(mgr *Manager) {
 	}
 }
 
-func display(mgr *Manager) {
+func display(mgr *Manager, done chan bool) {
 	for {
+		select {
+		case <-done:
+			return
+		default:
+		}
 		fmt.Print("\033[H\033[2J")
 		mgr.mu.Lock()
 		for _, lane := range mgr.Lanes {
@@ -70,6 +76,7 @@ func display(mgr *Manager) {
 			}
 		}
 		fmt.Println()
+		fmt.Print("очередь: ")
 		if len(mgr.Queue) == 0 {
 			fmt.Print("empty")
 		} else {
@@ -93,6 +100,25 @@ func display(mgr *Manager) {
 	}
 }
 
+func printLeaderboard(mgr *Manager) {
+	var players []*Player
+	for _, p := range mgr.FinishedPlayers {
+		players = append(players, p)
+	}
+
+	sort.Slice(players, func(i, j int) bool {
+		return players[i].Score > players[j].Score
+	})
+
+	fmt.Println("\n\n топ-3 за сегодня")
+
+	// for i, p := range players  {
+	for i := 0; i < 3 && i < len(players); i++ {
+		p := players[i]
+		fmt.Printf("%d. Player %d \t Score: %d\n", i+1, p.Id, p.Score)
+	}
+}
+
 func main() {
 	// input := "X X X X X X X X X X X 2"
 	// thr, err := utils.Inp(input)
@@ -105,9 +131,20 @@ func main() {
 	// 	fmt.Println("Ошибка подсчёта:", err)
 	// }
 	// fmt.Printf("Res: %d", sc)
+	cnt := 50
 
-	mgr := NewManager(3)
+	mgr := NewManager(5)
+	done := make(chan bool)
 	go mgr.Run()
-	go display(mgr)
-	genPlayers(mgr)
+	go display(mgr, done)
+	genPlayers(mgr, cnt)
+
+	for len(mgr.FinishedPlayers) < cnt {
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	done <- true
+	// time.Sleep(200 * time.Millisecond)
+
+	printLeaderboard(mgr)
 }
